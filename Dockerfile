@@ -1,13 +1,9 @@
-FROM node:alpine
-WORKDIR /usr/src/app
-COPY . /usr/src/app/
+FROM node:16-alpine as builder
+WORKDIR '/app'
+COPY package.json .
+RUN npm install
+COPY . .
+RUN npm run build
 
-# We don't need to do this cache clean, I guess it wastes time / saves space: https://github.com/yarnpkg/rfcs/pull/53
-RUN set -ex; \
-  yarn install --frozen-lockfile --production; \
-  yarn cache clean; \
-  yarn run build
-
-FROM nginx:alpine
-WORKDIR /usr/share/nginx/html
-COPY --from=0 /usr/src/app/build/ /usr/share/nginx/html
+FROM nginx
+COPY --from=builder /app/build /usr/share/nginx/html
